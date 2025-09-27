@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "TokyoToilet",
+    "slug": "tokyo-toilet",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "tokyotoilet",
+    "userInterfaceStyle": "automatic",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.lopezlabs.tokyotoiletapp",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs camera access to allow users to take photos of toilets."
+      }
+    },
+    "android": {
+      "package": "com.lopezlabs.tokyotoiletapp",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "cab492da-d91f-4268-a788-49a36c9fadae"
+      }
+    }
+  }
+}
