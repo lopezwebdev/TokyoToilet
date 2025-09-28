@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Navigation, Info, Camera, CameraIcon } from 'lucide-react';
+import { Ionicons } from '@expo/vector-icons';
 import { toiletLocations, ToiletLocation } from '../data/toiletLocations';
 import { CameraCapture } from './CameraCapture';
 import { ProgressCelebration } from './ProgressCelebration';
@@ -46,7 +46,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
   return (
     <>
       <div className="flex items-center gap-4 mb-8 pb-4 border-b border-slate-600/30">
-        <Camera className="w-5 h-5 text-amber-200" />
+        <Ionicons name="camera-outline" size={20} color="#FDE68A" />
         <h2 className="text-xl font-light text-slate-200 tracking-wide uppercase">{t('map.title')}</h2>
       </div>
 
@@ -76,7 +76,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
                   </h3>
                   {completedLocations.has(toilet.id) && (
                     <div className="flex items-center gap-1 px-2 py-1 bg-green-400/20 border border-green-400/30 rounded-full">
-                      <Camera className="w-3 h-3 text-green-400" />
+                      <Ionicons name="camera-outline" size={12} color="#4ade80" />
                       <span className="text-xs text-green-400 font-medium">{t('map.visited')}</span>
                     </div>
                   )}
@@ -99,7 +99,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
                       className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-white hover:text-amber-200 hover:bg-slate-700/50 transition-all duration-200 text-xs sm:text-sm rounded-lg"
                       title="Open in Google Maps"
                     >
-                      <MapPin className="w-4 h-4" />
+                      <Ionicons name="location-outline" size={16} color="currentColor" />
                       <span className="hidden sm:inline">{t('map.viewLocation')}</span>
                       <span className="sm:hidden">{t('map.location')}</span>
                     </button>
@@ -111,7 +111,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
                       className="flex items-center justify-end sm:justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-white hover:text-amber-200 hover:bg-slate-700/50 transition-all duration-200 text-xs sm:text-sm rounded-lg"
                       title="Take a photo at this location"
                     >
-                      <CameraIcon className="w-4 h-4" />
+                      <Ionicons name="camera-outline" size={16} color="currentColor" />
                       <span>{t('map.capture')}</span>
                     </button>
                   </div>
@@ -162,7 +162,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
 
       <div className="mt-8 p-6 bg-slate-900/50 border border-slate-600/30 rounded-lg">
         <div className="flex items-start gap-4">
-          <Info className="w-5 h-5 text-amber-200 mt-0.5" />
+          <Ionicons name="information-circle-outline" size={20} color="#FDE68A" style={{marginTop: 2}} />
           <div>
             <h4 className="font-light text-slate-200 mb-2 tracking-wide">{t('map.about.title')}</h4>
             <p className="text-sm text-slate-400 font-light leading-relaxed">

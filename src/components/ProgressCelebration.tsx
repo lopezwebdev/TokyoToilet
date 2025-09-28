@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Camera, MapPin, Sparkles } from 'lucide-react';
+import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProgressCelebrationProps {
@@ -39,19 +39,19 @@ export const ProgressCelebration: React.FC<ProgressCelebrationProps> = ({
       <div className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-xl border border-amber-200/30 max-w-md w-full p-8 text-center relative overflow-hidden">
         {/* Sparkle effects */}
         <div className="absolute top-4 left-4">
-          <Sparkles className="w-4 h-4 text-amber-200 animate-pulse" />
+          <Ionicons name="sparkles-outline" size={16} color="#FDE68A" />
         </div>
         <div className="absolute top-6 right-6">
-          <Sparkles className="w-3 h-3 text-amber-300 animate-pulse delay-300" />
+          <Ionicons name="sparkles-outline" size={12} color="#FCD34D" />
         </div>
         <div className="absolute bottom-8 left-6">
-          <Sparkles className="w-3 h-3 text-amber-200 animate-pulse delay-700" />
+          <Ionicons name="sparkles-outline" size={12} color="#FDE68A" />
         </div>
 
         {/* Success icon */}
         <div className="mb-6">
           <div className="w-16 h-16 bg-amber-200/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-amber-200" />
+            <Ionicons name="checkmark-circle-outline" size={32} color="#FDE68A" />
           </div>
           <h2 className="text-2xl font-light text-amber-100 tracking-wide mb-2">
             {t('progress.locationCaptured')}
@@ -61,12 +61,12 @@ export const ProgressCelebration: React.FC<ProgressCelebrationProps> = ({
         {/* Location details */}
         <div className="mb-6 p-4 bg-slate-700/30 rounded-lg border border-slate-600/30">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <MapPin className="w-4 h-4 text-amber-200" />
+            <Ionicons name="location-outline" size={16} color="#FDE68A" />
             <h3 className="font-light text-slate-200 tracking-wide">{locationName}</h3>
           </div>
           <p className="text-sm text-amber-200 italic">by {architect}</p>
           <div className="flex items-center justify-center gap-2 mt-2 text-slate-400">
-            <Camera className="w-4 h-4" />
+            <Ionicons name="camera-outline" size={16} color="currentColor" />
             <span className="text-xs">{t('progress.documented')}</span>
           </div>
         </div>
