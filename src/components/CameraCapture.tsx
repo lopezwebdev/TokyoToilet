@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import { Camera, X, Download, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface CameraCaptureProps {
@@ -103,7 +103,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-600">
           <div className="flex items-center gap-3">
-            <Ionicons name="camera-outline" size={20} color="#FDE68A" />
+            <Camera className="w-5 h-5 text-amber-200" />
             <h3 className="text-lg font-light text-slate-200 tracking-wide">
               {t('camera.title')} {locationName}
             </h3>
@@ -112,7 +112,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
             onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded-lg transition-colors"
           >
-            <Ionicons name="close-outline" size={20} color="currentColor" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -144,14 +144,14 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                   onClick={retakePhoto}
                   className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors"
                 >
-                  <Ionicons name="refresh-outline" size={16} color="currentColor" />
+                  <RotateCcw className="w-4 h-4" />
                   {t('camera.retake')}
                 </button>
                 <button
                   onClick={savePhoto}
                   className="flex items-center gap-2 px-4 py-2 bg-amber-200 text-slate-900 rounded-lg hover:bg-amber-300 transition-colors"
                 >
-                  <Ionicons name="download-outline" size={16} color="currentColor" />
+                  <Download className="w-4 h-4" />
                   {t('camera.savePhoto')}
                 </button>
               </div>
@@ -170,7 +170,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                   onClick={capturePhoto}
                   className="w-16 h-16 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transition-colors shadow-lg"
                 >
-                  <Ionicons name="camera-outline" size={32} color="#1e293b" />
+                  <Camera className="w-8 h-8 text-slate-900" />
                 </button>
               </div>
             </div>

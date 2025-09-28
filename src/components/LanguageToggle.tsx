@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import { Languages } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export const LanguageToggle: React.FC = () => {
@@ -22,7 +22,7 @@ export const LanguageToggle: React.FC = () => {
           onClick={handleToggleExpand}
           className="flex items-center justify-center w-10 h-10 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
         >
-          <Ionicons name="language-outline" size={16} color="white" />
+          <Languages className="w-4 h-4 text-white" />
         </button>
       ) : (
         <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg p-2">
@@ -30,7 +30,7 @@ export const LanguageToggle: React.FC = () => {
             onClick={handleToggleExpand}
             className="flex items-center justify-center w-6 h-6 hover:bg-white/10 rounded transition-colors"
           >
-            <Ionicons name="language-outline" size={16} color="white" />
+            <Languages className="w-4 h-4 text-white" />
           </button>
           <button
             onClick={() => handleLanguageSelect('en')}
