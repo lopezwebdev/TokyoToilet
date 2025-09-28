@@ -1,5 +1,6 @@
 import React from 'react';
-import { Languages } from 'lucide-react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Using Expo vector icons
 import { useLanguage } from '../contexts/LanguageContext';
 
 export const LanguageToggle: React.FC = () => {
@@ -16,44 +17,108 @@ export const LanguageToggle: React.FC = () => {
   };
 
   return (
-    <div className="relative">
+    <View style={styles.container}>
       {!isExpanded ? (
-        <button
-          onClick={handleToggleExpand}
-          className="flex items-center justify-center w-10 h-10 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
+        <TouchableOpacity
+          onPress={handleToggleExpand}
+          style={styles.toggleButton}
         >
-          <Languages className="w-4 h-4 text-white" />
-        </button>
+          <Ionicons name="language-outline" size={24} color="white" />
+        </TouchableOpacity>
       ) : (
-        <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg p-2">
-          <button
-            onClick={handleToggleExpand}
-            className="flex items-center justify-center w-6 h-6 hover:bg-white/10 rounded transition-colors"
+        <View style={styles.expandedContainer}>
+          <TouchableOpacity
+            onPress={handleToggleExpand}
+            style={styles.smallButton}
           >
-            <Languages className="w-4 h-4 text-white" />
-          </button>
-          <button
-            onClick={() => handleLanguageSelect('en')}
-            className={`px-3 py-1 text-sm rounded transition-colors ${
-              language === 'en'
-                ? 'bg-white text-slate-900 font-medium'
-                : 'text-white hover:bg-white/10'
-            }`}
+            <Ionicons name="language-outline" size={20} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleLanguageSelect('en')}
+            style={[
+              styles.langButton,
+              language === 'en' && styles.selectedButton,
+            ]}
           >
-            EN
-          </button>
-          <button
-            onClick={() => handleLanguageSelect('ja')}
-            className={`px-3 py-1 text-sm rounded transition-colors ${
-              language === 'ja'
-                ? 'bg-white text-slate-900 font-medium'
-                : 'text-white hover:bg-white/10'
-            }`}
+            <Text
+              style={[
+                styles.langText,
+                language === 'en' && styles.selectedText,
+              ]}
+            >
+              EN
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleLanguageSelect('ja')}
+            style={[
+              styles.langButton,
+              language === 'ja' && styles.selectedButton,
+            ]}
           >
-            日本語
-          </button>
-        </div>
+            <Text
+              style={[
+                styles.langText,
+                language === 'ja' && styles.selectedText,
+              ]}
+            >
+              日本語
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
-    </div>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'relative',
+    alignItems: 'center',
+  },
+  toggleButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 10,
+    padding: 4,
+  },
+  smallButton: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  langButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'transparent',
+  },
+  selectedButton: {
+    backgroundColor: 'white',
+  },
+  langText: {
+    fontSize: 14,
+    color: 'white',
+  },
+  selectedText: {
+    color: '#1a1a1a',
+    fontWeight: '600',
+  },
+});
