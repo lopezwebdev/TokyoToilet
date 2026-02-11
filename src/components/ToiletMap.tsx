@@ -258,13 +258,9 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
           <Info className="w-5 h-5 text-amber-200 mt-0.5" />
           <div>
             <h4 className="font-light text-slate-200 mb-2 tracking-wide">{t('map.about.title')}</h4>
-            <p className="text-sm text-slate-400 font-light leading-relaxed mb-4">
+            <p className="text-sm text-slate-400 font-light leading-relaxed">
               {t('map.about.description')}
             </p>
-            <div className="flex items-center gap-2 text-amber-200/80 text-sm font-medium bg-amber-900/20 px-3 py-2 rounded-md border border-amber-900/30">
-              <Camera className="w-4 h-4" />
-              <span>Join the Rally! Visit locations and add your photos to complete the map.</span>
-            </div>
           </div>
         </div>
       </div>
@@ -297,10 +293,9 @@ const ToiletImage = ({ src, alt, className }: { src?: string; alt: string; class
 
   if (!src || error) {
     return (
-      <div className={`w-full h-full bg-slate-800/80 border border-dashed border-slate-600 flex flex-col items-center justify-center p-4 text-center group/placeholder transition-colors hover:bg-slate-800 ${className}`}>
-        <Camera className="w-8 h-8 text-slate-500 mb-2 group-hover/placeholder:text-amber-400 group-hover/placeholder:scale-110 transition-all duration-300" />
-        <span className="text-xs text-slate-400 font-medium group-hover/placeholder:text-slate-200">No Photo Yet</span>
-        <span className="text-[10px] text-amber-500/80 mt-1 font-bold uppercase tracking-wider group-hover/placeholder:text-amber-400">Capture This!</span>
+      <div className={`w-full h-full bg-slate-800 flex flex-col items-center justify-center p-4 text-center ${className}`}>
+        <Camera className="w-8 h-8 text-slate-600 mb-2" />
+        <span className="text-xs text-slate-500 font-light italic">Image unavailable</span>
       </div>
     );
   }
