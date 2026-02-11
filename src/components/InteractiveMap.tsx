@@ -15,20 +15,54 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Function to create numbered icons
+// Function to create numbered icons with larger circles
 const createNumberedIcon = (index: number, isVisited: boolean) => {
-    const color = isVisited ? 'green' : 'blue';
+    const bgColor = isVisited ? '#22c55e' : '#3b82f6'; // green-500 : blue-500
+
     return L.divIcon({
-        className: 'custom-div-icon',
+        className: 'custom-numbered-pin',
         html: `
-            <div style="position: relative; width: 30px; height: 42px;">
-                <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png" style="width: 25px; height: 41px; display: block; margin: 0 auto;" />
-                <span style="position: absolute; top: 6px; left: 0; width: 100%; text-align: center; color: white; font-weight: bold; font-size: 11px; text-shadow: 0px 1px 2px rgba(0,0,0,0.5);">${index + 1}</span>
+            <div style="
+                position: relative;
+                width: 36px; 
+                height: 36px;
+            ">
+                <div style="
+                    background-color: ${bgColor};
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 16px;
+                    position: relative;
+                    z-index: 2;
+                ">
+                    ${index + 1}
+                </div>
+                <div style="
+                    position: absolute;
+                    bottom: -8px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 0;
+                    height: 0;
+                    border-left: 8px solid transparent;
+                    border-right: 8px solid transparent;
+                    border-top: 10px solid ${bgColor};
+                    z-index: 1;
+                    filter: drop-shadow(0 2px 1px rgba(0,0,0,0.2));
+                "></div>
             </div>
         `,
-        iconSize: [30, 42],
-        iconAnchor: [15, 42],
-        popupAnchor: [0, -34]
+        iconSize: [36, 46], // Width 36, Height 36+10(tail)
+        iconAnchor: [18, 46], // Center X (18), Bottom Y (46)
+        popupAnchor: [0, -46]
     });
 };
 
@@ -90,14 +124,16 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                         icon={createNumberedIcon(index, completedLocations.has(toilet.id))}
                     >
                         <Popup>
-                            <div className="text-center">
+                            <div className="text-center min-w-[200px]">
                                 <h3 className="font-bold text-lg mb-1">{index + 1}. {toilet.name}</h3>
-                                <p className="text-sm italic mb-2">by {toilet.architect}</p>
+                                <p className="text-sm italic mb-3">by {toilet.architect}</p>
                                 {completedLocations.has(toilet.id) ? (
-                                    <div className="text-green-600 font-bold mb-2">✓ Visited</div>
+                                    <div className="bg-green-100 text-green-700 px-3 py-2 rounded-md font-bold mb-2 flex items-center justify-center gap-2">
+                                        <span>✓</span> Visited
+                                    </div>
                                 ) : (
                                     <button
-                                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+                                        className="w-full bg-amber-500 text-white px-4 py-2 rounded-md hover:bg-amber-600 transition-colors font-medium text-sm"
                                         onClick={() => onToiletSelect(toilet)}
                                     >
                                         Check In / Take Photo
@@ -107,7 +143,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                                     href={`https://www.google.com/maps/search/?api=1&query=${toilet.coordinates.lat},${toilet.coordinates.lng}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="block mt-2 text-xs text-blue-400 hover:text-blue-600 underline"
+                                    className="block mt-3 text-xs text-slate-500 hover:text-amber-600 hover:underline"
                                 >
                                     Open in Google Maps
                                 </a>
