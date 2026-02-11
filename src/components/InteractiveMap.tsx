@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { toiletLocations, ToiletLocation } from '../data/toiletLocations';
@@ -16,8 +16,10 @@ const DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 // Function to create numbered icons with larger circles
-const createNumberedIcon = (index: number, isVisited: boolean) => {
-    const bgColor = isVisited ? '#22c55e' : '#3b82f6'; // green-500 : blue-500
+const createNumberedIcon = (index: number, isVisited: boolean, isSelected: boolean) => {
+    const bgColor = isVisited ? '#22c55e' : (isSelected ? '#f59e0b' : '#3b82f6'); // green : amber(selected) : blue
+    const scale = isSelected ? 1.2 : 1;
+    const zIndex = isSelected ? 1000 : 1;
 
     return L.divIcon({
         className: 'custom-numbered-pin',
@@ -25,7 +27,10 @@ const createNumberedIcon = (index: number, isVisited: boolean) => {
             <div style="
                 position: relative;
                 width: 36px; 
-                height: 36px;
+                height: 46px; /* increased to accommodate scale without clipping if needed, though transform handles visual size */
+                transform: scale(${scale});
+                transform-origin: bottom center;
+                transition: transform 0.3s ease;
             ">
                 <div style="
                     background-color: ${bgColor};
@@ -33,7 +38,7 @@ const createNumberedIcon = (index: number, isVisited: boolean) => {
                     height: 36px;
                     border-radius: 50%;
                     border: 2px solid white;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -47,21 +52,22 @@ const createNumberedIcon = (index: number, isVisited: boolean) => {
                 </div>
                 <div style="
                     position: absolute;
-                    bottom: -8px;
+                    bottom: 0px; /* adjusted visually */
                     left: 50%;
                     transform: translateX(-50%);
                     width: 0;
                     height: 0;
                     border-left: 8px solid transparent;
                     border-right: 8px solid transparent;
-                    border-top: 10px solid ${bgColor};
+                    border-top: 12px solid ${bgColor};
                     z-index: 1;
                     filter: drop-shadow(0 2px 1px rgba(0,0,0,0.2));
+                    margin-bottom: -8px; /* pull down */
                 "></div>
             </div>
         `,
-        iconSize: [36, 46], // Width 36, Height 36+10(tail)
-        iconAnchor: [18, 46], // Center X (18), Bottom Y (46)
+        iconSize: [36, 46],
+        iconAnchor: [18, 46],
         popupAnchor: [0, -46]
     });
 };
@@ -79,22 +85,55 @@ interface InteractiveMapProps {
     completedLocations: Set<string>;
     onToiletSelect: (toilet: ToiletLocation) => void;
     userLocation: { lat: number; lng: number } | null;
+    selectedToilet: ToiletLocation | null;
 }
 
-const RecenterMap = ({ center }: { center: { lat: number; lng: number } }) => {
+const MapController = ({ selectedToilet, userLocation }: { selectedToilet: ToiletLocation | null, userLocation: { lat: number; lng: number } | null }) => {
     const map = useMap();
+    const firstRender = useRef(true);
+
+    // Fly to selected toilet
     useEffect(() => {
-        map.setView([center.lat, center.lng], 15);
-    }, [center, map]);
+        if (selectedToilet) {
+            map.flyTo([selectedToilet.coordinates.lat, selectedToilet.coordinates.lng], 16, {
+                animate: true,
+                duration: 1.5
+            });
+        }
+    }, [selectedToilet, map]);
+
+    // Center on user location only on first load/update if not selecting a toilet
+    useEffect(() => {
+        if (userLocation && firstRender.current && !selectedToilet) {
+            map.setView([userLocation.lat, userLocation.lng], 14);
+            firstRender.current = false;
+        }
+    }, [userLocation, map, selectedToilet]);
+
     return null;
 };
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     completedLocations,
     onToiletSelect,
-    userLocation
+    userLocation,
+    selectedToilet
 }) => {
-    const center = { lat: 35.65910807942215, lng: 139.7037289296481 }; // Default Tokyo/Shibuya center
+    // Default center (Tokyo/Shibuya)
+    const center = { lat: 35.65910807942215, lng: 139.7037289296481 };
+
+    // Marker refs to open popup programmatically could happen here,
+    // but focusing map is usually sufficient. 
+    // If needed, we can use a ref map: const markerRefs = useRef({}); 
+    // and explicitly call openPopup().
+
+    const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
+
+    useEffect(() => {
+        if (selectedToilet && markerRefs.current[selectedToilet.id]) {
+            markerRefs.current[selectedToilet.id]?.openPopup();
+        }
+    }, [selectedToilet]);
 
     return (
         <div className="h-[600px] w-full rounded-lg overflow-hidden border border-slate-600/50 shadow-xl relative z-0">
@@ -109,6 +148,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
+                <MapController selectedToilet={selectedToilet} userLocation={userLocation} />
+
                 {/* User Location Marker */}
                 {userLocation && (
                     <Marker position={[userLocation.lat, userLocation.lng]} icon={currentLocationIcon}>
@@ -121,7 +162,19 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                     <Marker
                         key={toilet.id}
                         position={[toilet.coordinates.lat, toilet.coordinates.lng]}
-                        icon={createNumberedIcon(index, completedLocations.has(toilet.id))}
+                        icon={createNumberedIcon(
+                            index,
+                            completedLocations.has(toilet.id),
+                            selectedToilet?.id === toilet.id
+                        )}
+                        ref={(ref) => {
+                            if (ref) markerRefs.current[toilet.id] = ref;
+                        }}
+                        eventHandlers={{
+                            click: () => {
+                                // optional additional logic
+                            }
+                        }}
                     >
                         <Popup>
                             <div className="text-center min-w-[200px]">
@@ -145,14 +198,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                                     rel="noreferrer"
                                     className="block mt-3 text-xs text-slate-500 hover:text-amber-600 hover:underline"
                                 >
-                                    Open in Google Maps
+                                    Open in Google Maps (External)
                                 </a>
                             </div>
                         </Popup>
                     </Marker>
                 ))}
-
-                {userLocation && <RecenterMap center={userLocation} />}
             </MapContainer>
         </div>
     );

@@ -3,7 +3,7 @@ import { MapPin, Navigation, Info, Camera, CameraIcon, CheckCircle, List, Map as
 import { toiletLocations, ToiletLocation } from '../data/toiletLocations';
 import { CameraCapture } from './CameraCapture';
 import { ProgressCelebration } from './ProgressCelebration';
-import { GoogleInteractiveMap } from './GoogleInteractiveMap';
+import { InteractiveMap } from './InteractiveMap';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ToiletMapProps {
@@ -20,6 +20,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
   const [showCelebration, setShowCelebration] = useState<{ toilet: ToiletLocation, count: number, total: number } | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapSelectedToilet, setMapSelectedToilet] = useState<ToiletLocation | null>(null);
 
   // Load saved progress on mount
   useEffect(() => {
@@ -79,6 +80,12 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
     setCameraToilet(null);
   };
 
+  const handleViewLocation = (toilet: ToiletLocation, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMapSelectedToilet(toilet);
+    setViewMode('map');
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-600/30">
@@ -92,8 +99,8 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
           <button
             onClick={() => setViewMode('list')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'list'
-              ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
           >
             <List className="w-4 h-4" />
@@ -102,8 +109,8 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
           <button
             onClick={() => setViewMode('map')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'map'
-              ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
           >
             <MapIcon className="w-4 h-4" />
@@ -113,10 +120,11 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
       </div>
 
       {viewMode === 'map' ? (
-        <GoogleInteractiveMap
+        <InteractiveMap
           completedLocations={completedLocations}
           onToiletSelect={(toilet) => setCameraToilet(toilet)}
           userLocation={userLocation}
+          selectedToilet={mapSelectedToilet}
         />
       ) : (
         <div className="grid gap-6 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600">
@@ -165,16 +173,13 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-3 pl-12">
                       <div className="flex flex-row items-center gap-3">
-                        {/* View Location -> Now opens Check In / Camera */}
+                        {/* View Location -> Now switches to Map layout and flys to pin */}
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCameraToilet(toilet); // Previously openInMaps(toilet)
-                          }}
+                          onClick={(e) => handleViewLocation(toilet, e)}
                           className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-white hover:text-amber-200 hover:bg-slate-700/50 transition-all duration-200 text-xs sm:text-sm rounded-lg"
-                          title="Check In at this location"
+                          title="View on Map"
                         >
-                          <MapPin className="w-4 h-4" />
+                          <MapIcon className="w-4 h-4" />
                           <span className="hidden sm:inline">{t('map.viewLocation')}</span>
                           <span className="sm:hidden">{t('map.location')}</span>
                         </button>
@@ -196,14 +201,11 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
 
                   <div className="flex-shrink-0 order-1 lg:order-2">
                     <div className="space-y-3">
-                      {/* Image Preview clickable to open maps as fallback or maybe camera too? Keeping as Maps for now since image usually implies 'details' */}
+                      {/* Image Preview clickable to view location on map */}
                       <div
                         className="w-full sm:w-64 lg:w-56 h-40 overflow-hidden bg-slate-700 border border-slate-600 group-hover:border-slate-500 transition-colors rounded-lg cursor-pointer relative group/image"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCameraToilet(toilet); // Use same camera prompt for image click too? Or map? Use Camera as requested for 'view location' logic.
-                        }}
-                        title="Check In"
+                        onClick={(e) => handleViewLocation(toilet, e)}
+                        title="View on Map"
                       >
                         {/* Toilet Image or Placeholder */}
                         <ToiletImage
@@ -214,7 +216,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
 
                         {/* Overlay Hint */}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
-                          <Camera className="w-6 h-6 text-white drop-shadow-md" />
+                          <MapIcon className="w-6 h-6 text-white drop-shadow-md" />
                         </div>
                       </div>
 
