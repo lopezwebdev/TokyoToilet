@@ -70,21 +70,39 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     setError(null);
     checkLocation();
 
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('TIMEOUT')), 10000)
+    );
+
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+      // Basic constraints for maximum compatibility
+      const constraints = {
         video: {
-          facingMode: 'environment',
-          aspectRatio: { ideal: 9 / 16 }
+          facingMode: 'environment'
         }
-      });
+      };
+
+      const mediaStream = await Promise.race([
+        navigator.mediaDevices.getUserMedia(constraints),
+        timeout
+      ]) as MediaStream;
 
       setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-    } catch (err) {
-      setError(t('camera.error'));
+      // Note: videoRef might be null if we are still in isLoading state in render
+      // We will set srcObject in a useEffect when loading finishes or video renders
+    } catch (err: any) {
       console.error('Camera access error:', err);
+      let errorMessage = t('camera.error');
+
+      if (err.message === 'TIMEOUT') {
+        errorMessage = 'Camera is taking too long to start. Please check permissions.';
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMessage = 'Camera permission denied. Please reset permissions in Settings.';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMessage = 'No camera found on this device.';
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +156,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     startCamera();
   }, [startCamera]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  useEffect(() => {
     startCamera();
     return () => stopCamera();
   }, [startCamera, stopCamera]);
@@ -174,9 +198,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 {t('camera.tryAgain')}
               </button>
             </div>
-          ) : isLoading ? (
-            <div className="p-8 text-center">
-              <p className="text-slate-400">{t('camera.starting')}</p>
+          ) : isLoading || isVerifyingLocation ? (
+            <div className="p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
+              <div className="w-8 h-8 border-4 border-amber-200 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-slate-400">
+                {isLoading ? t('camera.starting') : 'Verifying location...'}
+              </p>
             </div>
           ) : capturedPhoto ? (
             <div className="relative">
