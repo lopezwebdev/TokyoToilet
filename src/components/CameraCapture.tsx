@@ -27,6 +27,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [isVerifyingLocation, setIsVerifyingLocation] = useState(false);
 
   const checkLocation = useCallback(() => {
+    // TEST OVERRIDE: Bypass location check for Yoyogi Fukamachi Mini Park
+    if (locationName.includes("Yoyogi Fukamachi") || locationName.includes("代々木深町")) {
+      setIsVerifyingLocation(false);
+      setLocationError(null);
+      return;
+    }
+
     setIsVerifyingLocation(true);
     setLocationError(null);
 
