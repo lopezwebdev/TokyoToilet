@@ -97,8 +97,8 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
           <button
             onClick={() => setViewMode('list')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'list'
-                ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
           >
             <List className="w-4 h-4" />
@@ -107,8 +107,8 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
           <button
             onClick={() => setViewMode('map')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'map'
-                ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
           >
             <MapIcon className="w-4 h-4" />
@@ -126,7 +126,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
       ) : (
         <div className="grid gap-6 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600">
           <div className="grid gap-6 max-h-[600px] overflow-y-auto scrollbar-hidden">
-            {toiletLocations.map((toilet) => (
+            {toiletLocations.map((toilet, index) => (
               <div
                 key={toilet.id}
                 className={`p-6 border transition-all duration-300 cursor-pointer group ${selectedToilet?.id === toilet.id
@@ -144,25 +144,31 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
                   <div className="flex-1 order-2 lg:order-1">
                     <div className="flex items-center gap-3 mb-2">
+                      {/* Number Badge matching Map Marker style */}
+                      <div className={`flex items-center justify-center w-9 h-9 rounded-full border-2 border-white shadow-md font-bold text-white text-base shrink-0 ${completedLocations.has(toilet.id) ? 'bg-green-500' : 'bg-blue-500'
+                        }`}>
+                        {index + 1}
+                      </div>
+
                       <h3 className="font-light text-slate-200 text-lg tracking-wide">
                         {language === 'ja' ? toilet.nameJa : toilet.name}
                       </h3>
                       {completedLocations.has(toilet.id) && (
                         <div className="flex items-center gap-1 px-2 py-1 bg-green-400/20 border border-green-400/30 rounded-full">
-                          <Camera className="w-3 h-3 text-green-400" />
+                          <CheckCircle className="w-3 h-3 text-green-400" />
                           <span className="text-xs text-green-400 font-medium">{t('map.visited')}</span>
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-amber-200 mb-3 font-light italic">
+                    <p className="text-sm text-amber-200 mb-3 font-light italic pl-12">
                       by {language === 'ja' ? toilet.architectJa : toilet.architect}
                     </p>
-                    <p className="text-xs text-white mb-3 font-light">
+                    <p className="text-xs text-white mb-3 font-light pl-12">
                       {language === 'ja' ? toilet.addressJa : toilet.address}
                     </p>
-                    <p className="text-sm text-slate-300 font-light leading-relaxed">{t(`toilet.${toilet.id}.description`)}</p>
+                    <p className="text-sm text-slate-300 font-light leading-relaxed pl-12">{t(`toilet.${toilet.id}.description`)}</p>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-3 pl-12">
                       <div className="flex flex-row items-center gap-3">
                         <button
                           onClick={(e) => {
