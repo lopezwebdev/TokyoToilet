@@ -3,7 +3,7 @@ import { MapPin, Navigation, Info, Camera, CameraIcon, CheckCircle, List, Map as
 import { toiletLocations, ToiletLocation } from '../data/toiletLocations';
 import { CameraCapture } from './CameraCapture';
 import { ProgressCelebration } from './ProgressCelebration';
-import { InteractiveMap } from './InteractiveMap';
+import { GoogleInteractiveMap } from './GoogleInteractiveMap';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ToiletMapProps {
@@ -50,11 +50,6 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
       );
     }
   }, []);
-
-  const openInMaps = (toilet: ToiletLocation) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${toilet.coordinates.lat},${toilet.coordinates.lng}`;
-    window.open(url, '_blank');
-  };
 
   const handlePhotoTaken = (toiletId: string, photoUrl: string) => {
     // Save photo
@@ -118,7 +113,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
       </div>
 
       {viewMode === 'map' ? (
-        <InteractiveMap
+        <GoogleInteractiveMap
           completedLocations={completedLocations}
           onToiletSelect={(toilet) => setCameraToilet(toilet)}
           userLocation={userLocation}
@@ -170,18 +165,20 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-3 pl-12">
                       <div className="flex flex-row items-center gap-3">
+                        {/* View Location -> Now opens Check In / Camera */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            openInMaps(toilet);
+                            setCameraToilet(toilet); // Previously openInMaps(toilet)
                           }}
                           className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-white hover:text-amber-200 hover:bg-slate-700/50 transition-all duration-200 text-xs sm:text-sm rounded-lg"
-                          title="Open in Google Maps"
+                          title="Check In at this location"
                         >
                           <MapPin className="w-4 h-4" />
                           <span className="hidden sm:inline">{t('map.viewLocation')}</span>
                           <span className="sm:hidden">{t('map.location')}</span>
                         </button>
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -199,13 +196,14 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
 
                   <div className="flex-shrink-0 order-1 lg:order-2">
                     <div className="space-y-3">
+                      {/* Image Preview clickable to open maps as fallback or maybe camera too? Keeping as Maps for now since image usually implies 'details' */}
                       <div
                         className="w-full sm:w-64 lg:w-56 h-40 overflow-hidden bg-slate-700 border border-slate-600 group-hover:border-slate-500 transition-colors rounded-lg cursor-pointer relative group/image"
                         onClick={(e) => {
                           e.stopPropagation();
-                          openInMaps(toilet);
+                          setCameraToilet(toilet); // Use same camera prompt for image click too? Or map? Use Camera as requested for 'view location' logic.
                         }}
-                        title="Open location in Google Maps"
+                        title="Check In"
                       >
                         {/* Toilet Image or Placeholder */}
                         <ToiletImage
@@ -216,7 +214,7 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
 
                         {/* Overlay Hint */}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
-                          <MapPin className="w-6 h-6 text-white drop-shadow-md" />
+                          <Camera className="w-6 h-6 text-white drop-shadow-md" />
                         </div>
                       </div>
 
