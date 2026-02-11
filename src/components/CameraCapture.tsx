@@ -1,17 +1,20 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Camera, X, Download, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { calculateDistance } from '../utils/geolocation';
 
 interface CameraCaptureProps {
   locationName: string;
+  targetCoordinates: { lat: number; lng: number };
   onClose: () => void;
   onPhotoTaken: (photoUrl: string) => void;
 }
 
-export const CameraCapture: React.FC<CameraCaptureProps> = ({ 
-  locationName, 
-  onClose, 
-  onPhotoTaken 
+export const CameraCapture: React.FC<CameraCaptureProps> = ({
+  locationName,
+  targetCoordinates,
+  onClose,
+  onPhotoTaken
 }) => {
   const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -20,20 +23,62 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isVerifyingLocation, setIsVerifyingLocation] = useState(false);
+
+  const checkLocation = useCallback(() => {
+    setIsVerifyingLocation(true);
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported');
+      setIsVerifyingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+
+        const distance = calculateDistance(
+          userLat,
+          userLng,
+          targetCoordinates.lat,
+          targetCoordinates.lng
+        );
+
+        // Allow if within 50 meters
+        if (distance <= 50) {
+          setLocationError(null);
+        } else {
+          setLocationError(`You are too far from the location (${Math.round(distance)}m)`);
+        }
+        setIsVerifyingLocation(false);
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        setLocationError('Unable to retrieve location');
+        setIsVerifyingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  }, [targetCoordinates]);
 
   const startCamera = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+    checkLocation();
+
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           facingMode: 'environment', // Use back camera on mobile
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         }
       });
-      
+
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -44,7 +89,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [checkLocation, t]);
 
   const stopCamera = useCallback(() => {
     if (stream) {
@@ -54,6 +99,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   }, [stream]);
 
   const capturePhoto = useCallback(() => {
+    if (locationError) return;
+
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -73,7 +120,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     const photoUrl = canvas.toDataURL('image/jpeg', 0.9);
     setCapturedPhoto(photoUrl);
     stopCamera();
-  }, [stopCamera]);
+  }, [stopCamera, locationError]);
 
   const savePhoto = useCallback(() => {
     if (!capturedPhoto) return;
@@ -180,7 +227,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         {/* Instructions */}
         <div className="p-4 border-t border-slate-600">
           <p className="text-sm text-slate-400 text-center font-light">
-            {capturedPhoto 
+            {capturedPhoto
               ? t('camera.instructions.save')
               : t('camera.instructions.capture')
             }

@@ -15,7 +15,7 @@ const translations = {
     // Header
     'app.title': 'Tokyo Toilet Explorer',
     'app.subtitle': 'A guided journey through Tokyo\'s groundbreaking public restroom designs — celebrating architecture, accessibility, and dignity in urban space.',
-    
+
     // Map section
     'map.title': 'Architectural Meditations',
     'map.viewLocation': 'View Location',
@@ -24,7 +24,7 @@ const translations = {
     'map.visited': 'Visited',
     'map.about.title': 'About the Tokyo Toilet Project',
     'map.about.description': 'A meditation on the intersection of necessity and beauty, the Tokyo Toilet Project is a visionary initiative by The Nippon Foundation, where world-renowned architects transform the most humble of public spaces into profound statements about human dignity and urban poetry.',
-    
+
     // Camera
     'camera.title': 'Capture at',
     'camera.starting': 'Starting camera...',
@@ -34,7 +34,7 @@ const translations = {
     'camera.savePhoto': 'Save Photo',
     'camera.instructions.capture': 'Position yourself at the location and capture your perspective',
     'camera.instructions.save': 'Save your architectural meditation or retake the photo',
-    
+
     // Progress celebration
     'progress.locationCaptured': 'Location Captured',
     'progress.documented': 'Architectural meditation documented',
@@ -46,7 +46,7 @@ const translations = {
     'progress.deepening': 'Your architectural meditation is deepening with each location.',
     'progress.begun': 'Your journey through Tokyo\'s architectural poetry has begun.',
     'progress.completionQuote': 'In the most humble spaces, we find the most profound beauty. Your journey through Tokyo\'s architectural poetry is complete.',
-    
+
     // Toilet descriptions
     'toilet.yoyogi-fukamachi.description': 'Famous transparent glass toilet that becomes opaque when locked',
     'toilet.haru-no-ogawa.description': 'Colorful transparent toilet with smart glass technology',
@@ -64,13 +64,14 @@ const translations = {
     'toilet.shibuya-spherical.description': 'Unique spherical design creating an otherworldly experience',
     'toilet.shibuya-cylindrical.description': 'Cylindrical form with innovative spatial design',
     'toilet.shibuya-modern-kawaya.description': 'Modern interpretation of traditional Japanese toilet design',
-    'toilet.shibuya-newson.description': 'Sleek, futuristic design with signature Newson aesthetics'
+    'toilet.shibuya-newson.description': 'Sleek, futuristic design with signature Newson aesthetics',
+    'app.disclaimer.independent': 'This application is an independent project and is not affiliated with, endorsed by, or associated with The Nippon Foundation or the official THE TOKYO TOILET project.'
   },
   ja: {
     // Header
     'app.title': '東京トイレエクスプローラー',
     'app.subtitle': '東京の画期的な公衆トイレデザインを巡る旅 — 建築、アクセシビリティ、そして都市空間における尊厳を讃えて。',
-    
+
     // Map section
     'map.title': '建築的瞑想',
     'map.viewLocation': '場所を見る',
@@ -79,7 +80,7 @@ const translations = {
     'map.visited': '訪問済み',
     'map.about.title': '東京トイレプロジェクトについて',
     'map.about.description': '必要性と美の交差点についての瞑想である東京トイレプロジェクトは、日本財団による先見的な取り組みであり、世界的に有名な建築家たちが最も謙虚な公共空間を人間の尊厳と都市の詩についての深遠な声明に変えています。',
-    
+
     // Camera
     'camera.title': '撮影場所：',
     'camera.starting': 'カメラを起動中...',
@@ -89,7 +90,7 @@ const translations = {
     'camera.savePhoto': '写真を保存',
     'camera.instructions.capture': '場所に位置して、あなたの視点を撮影してください',
     'camera.instructions.save': '建築的瞑想を保存するか、写真を撮り直してください',
-    
+
     // Progress celebration
     'progress.locationCaptured': '場所を撮影しました',
     'progress.documented': '建築的瞑想が記録されました',
@@ -101,7 +102,7 @@ const translations = {
     'progress.deepening': '各場所で建築的瞑想が深まっています。',
     'progress.begun': '東京の建築詩への旅が始まりました。',
     'progress.completionQuote': '最も謙虚な空間に、最も深遠な美を見つけます。東京の建築詩への旅が完了しました。',
-    
+
     // Toilet descriptions
     'toilet.yoyogi-fukamachi.description': '施錠すると不透明になる有名な透明ガラストイレ',
     'toilet.haru-no-ogawa.description': 'スマートガラス技術を使用したカラフルな透明トイレ',
@@ -119,7 +120,8 @@ const translations = {
     'toilet.shibuya-spherical.description': '異世界的な体験を創造するユニークな球形デザイン',
     'toilet.shibuya-cylindrical.description': '革新的な空間デザインを持つ円筒形',
     'toilet.shibuya-modern-kawaya.description': '伝統的な日本のトイレデザインの現代的解釈',
-    'toilet.shibuya-newson.description': 'ニューソンの特徴的な美学を持つ洗練された未来的デザイン'
+    'toilet.shibuya-newson.description': 'ニューソンの特徴的な美学を持つ洗練された未来的デザイン',
+    'app.disclaimer.independent': 'このアプリケーションは独立したプロジェクトであり、日本財団や公式のTHE TOKYO TOILETプロジェクトとは提携、支持、または関連していません。'
   }
 };
 
