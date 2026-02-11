@@ -26,6 +26,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isVerifyingLocation, setIsVerifyingLocation] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const checkLocation = useCallback(() => {
     // TEST OVERRIDE: Bypass location check for Yoyogi Fukamachi Mini Park
@@ -180,9 +181,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   }, [stream]);
 
   useEffect(() => {
-    startCamera();
     return () => stopCamera();
-  }, [startCamera, stopCamera]);
+  }, [stopCamera]);
+
+  const handleStartCamera = () => {
+    setHasStarted(true);
+    startCamera();
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
@@ -205,7 +210,21 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
         {/* Camera/Photo Area */}
         <div className="relative bg-black">
-          {error ? (
+          {!hasStarted ? (
+            <div className="p-12 text-center min-h-[300px] flex flex-col items-center justify-center">
+              <Camera className="w-16 h-16 text-slate-600 mb-6" />
+              <p className="text-slate-300 mb-6 font-light">
+                Ready to capture at {locationName}?
+              </p>
+              <button
+                onClick={handleStartCamera}
+                className="px-6 py-3 bg-amber-500 text-slate-900 font-bold rounded-full hover:bg-amber-400 transition-transform active:scale-95 shadow-lg flex items-center gap-2"
+              >
+                <Camera className="w-5 h-5" />
+                Start Camera
+              </button>
+            </div>
+          ) : error ? (
             <div className="p-8 text-center">
               <p className="text-red-400 mb-4">{error}</p>
               <button
