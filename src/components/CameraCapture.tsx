@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Camera, X, Download, RotateCcw } from 'lucide-react';
+import { Camera, X, Download, RotateCcw, MapPin } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { calculateDistance } from '../utils/geolocation';
 
@@ -73,9 +73,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          facingMode: 'environment',
+          aspectRatio: { ideal: 9 / 16 }
         }
       });
 
@@ -204,20 +203,47 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               </div>
             </div>
           ) : (
-            <div className="relative">
+            <div className="relative h-full">
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-auto max-h-96 object-contain"
+                className="w-full h-auto max-h-[80vh] object-cover" // object-cover for full screen feel
               />
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+
+              {locationError && (
+                <div className="absolute inset-0 z-20 bg-black/80 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+                  <div className="bg-slate-900 p-6 rounded-xl border border-slate-700 shadow-2xl max-w-sm">
+                    <MapPin className="w-10 h-10 text-red-400 mx-auto mb-3" />
+                    <h4 className="text-white font-medium mb-1">Location Check</h4>
+                    <p className="text-sm text-slate-300 mb-6 leading-relaxed">{locationError}</p>
+
+                    <div className="space-y-3">
+                      <button
+                        onClick={checkLocation}
+                        className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-600 transition-colors"
+                      >
+                        Retry GPS
+                      </button>
+                      <button
+                        onClick={() => setLocationError(null)}
+                        className="w-full px-4 py-2 bg-amber-500/10 text-amber-500 border border-amber-500/50 rounded-lg text-sm hover:bg-amber-500/20 transition-colors font-medium"
+                      >
+                        Bypass (Test Mode)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10">
                 <button
                   onClick={capturePhoto}
-                  className="w-16 h-16 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transition-colors shadow-lg"
+                  disabled={!!locationError}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg border-4 border-white/20 ${locationError ? 'bg-slate-500 cursor-not-allowed opacity-50' : 'bg-red-500 hover:bg-red-600 hover:scale-110'}`}
                 >
-                  <Camera className="w-8 h-8 text-slate-900" />
+                  <div className="w-14 h-14 rounded-full border-2 border-white"></div>
                 </button>
               </div>
             </div>
