@@ -19,6 +19,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const initializingRef = useRef(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,6 +74,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   }, [targetCoordinates]);
 
   const startCamera = useCallback(async () => {
+    if (initializingRef.current) return;
+    initializingRef.current = true;
+
     setIsLoading(true);
     setError(null);
     checkLocation();
@@ -94,9 +98,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         timeout
       ]) as MediaStream;
 
+      if (!initializingRef.current) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
       setStream(mediaStream);
-      // Note: videoRef might be null if we are still in isLoading state in render
-      // We will set srcObject in a useEffect when loading finishes or video renders
     } catch (err: any) {
       console.error('Camera access error:', err);
       let errorMessage = t('camera.error');
@@ -107,11 +114,14 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         errorMessage = 'Camera permission denied. Please reset permissions in Settings.';
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         errorMessage = 'No camera found on this device.';
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        errorMessage = 'Camera is in use by another app.';
       }
 
       setError(errorMessage);
     } finally {
       setIsLoading(false);
+      initializingRef.current = false;
     }
   }, [checkLocation, t]);
 
