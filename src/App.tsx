@@ -24,6 +24,9 @@ const AppContent: React.FC = () => {
             <p className="text-sm sm:text-base text-white font-light leading-relaxed max-w-xl mx-auto px-4">
               {t('app.subtitle')}
             </p>
+            <p className="text-amber-200 text-lg font-medium tracking-widest uppercase mt-4">
+              Digital Stamp Rally
+            </p>
           </div>
         </div>
 
@@ -41,7 +44,7 @@ const AppContent: React.FC = () => {
           </p>
         </footer>
       </div>
-    </div>
+    </div >
   );
 };
 

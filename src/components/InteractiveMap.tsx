@@ -15,24 +15,22 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Custom Icons for different states
-const visitedIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-const defaultIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
+// Function to create numbered icons
+const createNumberedIcon = (index: number, isVisited: boolean) => {
+    const color = isVisited ? 'green' : 'blue';
+    return L.divIcon({
+        className: 'custom-div-icon',
+        html: `
+            <div style="position: relative; width: 30px; height: 42px;">
+                <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png" style="width: 25px; height: 41px; display: block; margin: 0 auto;" />
+                <span style="position: absolute; top: 6px; left: 0; width: 100%; text-align: center; color: white; font-weight: bold; font-size: 11px; text-shadow: 0px 1px 2px rgba(0,0,0,0.5);">${index + 1}</span>
+            </div>
+        `,
+        iconSize: [30, 42],
+        iconAnchor: [15, 42],
+        popupAnchor: [0, -34]
+    });
+};
 
 const currentLocationIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -85,15 +83,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 )}
 
                 {/* Toilet Markers */}
-                {toiletLocations.map((toilet) => (
+                {toiletLocations.map((toilet, index) => (
                     <Marker
                         key={toilet.id}
                         position={[toilet.coordinates.lat, toilet.coordinates.lng]}
-                        icon={completedLocations.has(toilet.id) ? visitedIcon : defaultIcon}
+                        icon={createNumberedIcon(index, completedLocations.has(toilet.id))}
                     >
                         <Popup>
                             <div className="text-center">
-                                <h3 className="font-bold text-lg mb-1">{toilet.name}</h3>
+                                <h3 className="font-bold text-lg mb-1">{index + 1}. {toilet.name}</h3>
                                 <p className="text-sm italic mb-2">by {toilet.architect}</p>
                                 {completedLocations.has(toilet.id) ? (
                                     <div className="text-green-600 font-bold mb-2">✓ Visited</div>
