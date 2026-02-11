@@ -99,8 +99,8 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
           <button
             onClick={() => setViewMode('list')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'list'
-                ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
           >
             <List className="w-4 h-4" />
@@ -109,8 +109,8 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
           <button
             onClick={() => setViewMode('map')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'map'
-                ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              ? 'bg-amber-200/20 text-amber-200 border border-amber-200/30'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
           >
             <MapIcon className="w-4 h-4" />
@@ -147,11 +147,15 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
                   <div className="flex-1 order-2 lg:order-1">
                     <div className="flex items-center gap-3 mb-2">
-                      {/* Number Badge matching Map Marker style */}
-                      <div className={`flex items-center justify-center w-9 h-9 rounded-full border-2 border-white shadow-md font-bold text-white text-base shrink-0 ${completedLocations.has(toilet.id) ? 'bg-green-500' : 'bg-blue-500'
-                        }`}>
+                      {/* Number Badge matching Map Marker style - Clickable to View on Map */}
+                      <button
+                        onClick={(e) => handleViewLocation(toilet, e)}
+                        className={`flex items-center justify-center w-9 h-9 rounded-full border-2 border-white shadow-md font-bold text-white text-base shrink-0 transition-transform hover:scale-110 hover:border-amber-200 cursor-pointer ${completedLocations.has(toilet.id) ? 'bg-green-500' : 'bg-blue-500'
+                          }`}
+                        title="View on Map"
+                      >
                         {index + 1}
-                      </div>
+                      </button>
 
                       <h3 className="font-light text-slate-200 text-lg tracking-wide">
                         {language === 'ja' ? toilet.nameJa : toilet.name}
