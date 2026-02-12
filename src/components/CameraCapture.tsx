@@ -160,17 +160,29 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     setIsUploading(true);
 
     try {
-      // Create a unique filename
-      const filename = `submissions/${locationName.replace(/\s+/g, '_')}_${Date.now()}.jpg`;
+      // Create a unique filename (sanitize)
+      const sanitizedName = locationName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filename = `submissions/${sanitizedName}_${Date.now()}.jpg`;
       const storageRef = ref(storage, filename);
 
+      console.log('Starting upload to:', filename);
+
       // Upload the base64 string
-      await uploadString(storageRef, capturedPhoto, 'data_url');
+      const uploadTask = uploadString(storageRef, capturedPhoto, 'data_url');
+
+      // Timeout promise
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 15000)
+      );
+
+      await Promise.race([uploadTask, timeout]);
+
       const downloadURL = await getDownloadURL(storageRef);
+      console.log('Upload success, URL:', downloadURL);
 
       // Save metadata to Firestore
       await addDoc(collection(db, 'submissions'), {
-        toiletId: locationName, // Ideally use ID, but name works for now
+        toiletId: locationName,
         photoUrl: downloadURL,
         timestamp: serverTimestamp(),
         status: 'pending',
@@ -178,14 +190,28 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       });
 
       setUploadSuccess(true);
+
       // Wait 2s then close
       setTimeout(() => {
         onPhotoTaken(capturedPhoto); // Also save locally as "completed"
       }, 2000);
 
-    } catch (err) {
-      console.error("Upload failed:", err);
-      alert("Failed to upload photo. Please try again.");
+    } catch (err: any) {
+      console.error("Upload failed details:", err);
+      let msg = "Failed to upload photo.";
+
+      if (err.message === 'UPLOAD_TIMEOUT') {
+        msg = "Upload timed out. Check your internet connection.";
+      } else if (err.code === 'storage/unauthorized') {
+        msg = "Permission denied. Please check Firebase Storage rules (Test Mode).";
+      } else if (err.code === 'storage/object-not-found' || err.code === 'storage/bucket-not-found') {
+        msg = "Configuration Error: Storage bucket not reachable.";
+      } else if (err.message && err.message.includes('network')) {
+        msg = "Network error. Please check your connection.";
+      }
+
+      // Show full error for debugging
+      alert(msg + "\n\nDebug Info: " + (err.message || err.code));
     } finally {
       setIsUploading(false);
     }
