@@ -32,6 +32,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [hasStarted, setHasStarted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [userName, setUserName] = useState('');
 
   const checkLocation = useCallback(() => {
     setIsVerifyingLocation(true);
@@ -61,7 +62,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         );
 
         if (distance > 0.05) { // 50 meters
-          setLocationError(t('camera.locationError')); // "Too far away"
+          setLocationError("You are too far from the location to take this picture.");
         } else {
           setLocationError(null);
         }
@@ -167,7 +168,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     setIsUploading(true);
 
     try {
-      // 1. Convert Base64 (DataURL) to Blob - More robust for uploads
+      // 1. Convert Base64 (DataURL) to Blob
       const response = await fetch(capturedPhoto);
       const blob = await response.blob();
 
@@ -176,22 +177,16 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       const filename = `submissions/${sanitizedName}_${Date.now()}.jpg`;
       const storageRef = ref(storage, filename);
 
-      console.log('Starting Blob upload to:', filename, 'Size:', blob.size);
+      console.log('Starting upload...');
 
-      // 3. Upload Bytes with metadata
-      const uploadTask = uploadBytes(storageRef, blob, {
+      // 3. Upload Bytes (Simpler, no artificial race timeout)
+      await uploadBytes(storageRef, blob, {
         contentType: 'image/jpeg',
+        customMetadata: { author: userName || 'Anonymous' }
       });
 
-      // Timeout promise (20s)
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 20000)
-      );
-
-      await Promise.race([uploadTask, timeout]);
-
       const downloadURL = await getDownloadURL(storageRef);
-      console.log('Upload success, URL:', downloadURL);
+      console.log('Upload success:', downloadURL);
 
       // Save metadata to Firestore
       await addDoc(collection(db, 'submissions'), {
@@ -199,28 +194,25 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         photoUrl: downloadURL,
         timestamp: serverTimestamp(),
         status: 'pending',
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
+        authorName: userName || 'Anonymous'
       });
 
       setUploadSuccess(true);
-      // Wait 2s then close
+
+      // Wait 1.5s then close
       setTimeout(() => {
         onPhotoTaken(capturedPhoto);
-      }, 2000);
+      }, 1500);
 
     } catch (err: any) {
       console.error("Upload failed details:", err);
       let msg = "Failed to upload photo.";
 
-      if (err.message === 'UPLOAD_TIMEOUT') {
-        msg = "Upload timed out. Internet slow or Storage Bucket unreachable.";
-      } else if (err.code === 'storage/unauthorized') {
-        msg = "Permission denied. Check Firestore/Storage Rules.";
-      } else if (err.code === 'storage/object-not-found' || err.code === 'storage/bucket-not-found') {
-        msg = "Storage Bucket not found. Check firebase.ts config.";
-      }
+      if (err.code === 'storage/unauthorized') msg = "Permission denied. Check Storage Rules.";
+      if (err.code === 'storage/retry-limit-exceeded') msg = "Upload failed due to network issues.";
 
-      alert(msg + "\n\nDebug: " + (err.message || err.code));
+      alert(msg + "\n\nError: " + (err.message || err.code));
     } finally {
       setIsUploading(false);
     }
@@ -311,42 +303,66 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               </p>
             </div>
           ) : capturedPhoto ? (
-            <div className="relative">
+            <div className="relative flex flex-col items-center bg-slate-900 pb-4 rounded-b-xl overflow-hidden">
               <img
                 src={capturedPhoto}
                 alt="Captured photo"
-                className="w-full h-auto max-h-96 object-contain"
+                className="w-full h-auto max-h-[60vh] object-contain bg-black mb-4"
               />
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3">
-                <button
-                  onClick={retakePhoto}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  {t('camera.retake')}
-                </button>
-                <button
-                  onClick={savePhoto}
-                  className="flex items-center gap-2 px-4 py-2 bg-amber-200 text-slate-900 rounded-lg hover:bg-amber-300 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  {t('camera.savePhoto')}
-                </button>
 
+              <div className="w-full max-w-sm px-6 space-y-4">
+                {/* Name Input */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 ml-1">
+                    Your Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder="Enter your name for credit"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
+                  />
+                </div>
+
+                {/* Single Submit Button */}
                 <button
                   onClick={submitToArchive}
                   disabled={isUploading || uploadSuccess}
-                  className={`flex items-center gap-2 px-4 py-2 ${uploadSuccess ? 'bg-green-500 text-white' : 'bg-amber-500 text-slate-900'} font-bold rounded-lg hover:opacity-90 transition-all shadow-lg disabled:opacity-70`}
+                  className={`w-full py-4 text-base font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 ${uploadSuccess
+                      ? 'bg-green-500 text-white'
+                      : 'bg-amber-500 text-slate-900 hover:bg-amber-400'
+                    } disabled:opacity-70 disabled:cursor-not-allowed`}
                 >
                   {isUploading ? (
-                    <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
                   ) : uploadSuccess ? (
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="w-5 h-5" />
                   ) : (
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="w-5 h-5" />
                   )}
                   {isUploading ? 'Uploading...' : uploadSuccess ? 'Archived!' : 'Submit to Archive'}
                 </button>
+
+                {/* Secondary Actions */}
+                <div className="flex gap-3 justify-center pt-2 border-t border-slate-800">
+                  <button
+                    onClick={retakePhoto}
+                    disabled={isUploading}
+                    className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors flex justify-center items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Retake
+                  </button>
+                  <button
+                    onClick={savePhoto}
+                    disabled={isUploading}
+                    className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors flex justify-center items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Save Only
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
