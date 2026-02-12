@@ -262,21 +262,23 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
               {t('map.about.description')}
             </p>
 
-            <div className="mt-6">
-              <button
-                onClick={() => {
-                  if (window.confirm("Are you sure you want to reset all progress? This will delete your local photos and check-ins.")) {
-                    localStorage.removeItem('tokyo-toilet-photos');
-                    localStorage.removeItem('tokyo-toilet-completed');
-                    window.location.reload();
-                  }
-                }}
-                className="text-xs text-red-400/70 hover:text-red-400 flex items-center gap-2 transition-colors px-3 py-2 rounded-md hover:bg-red-900/20 border border-transparent hover:border-red-900/30"
-              >
-                <Trash2 className="w-3 h-3" />
-                Reset All Progress (Local)
-              </button>
-            </div>
+            {import.meta.env.DEV && (
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to reset all progress? This will delete your local photos and check-ins.")) {
+                      localStorage.removeItem('tokyo-toilet-photos');
+                      localStorage.removeItem('tokyo-toilet-completed');
+                      window.location.reload();
+                    }
+                  }}
+                  className="text-xs text-red-400/70 hover:text-red-400 flex items-center gap-2 transition-colors px-3 py-2 rounded-md hover:bg-red-900/20 border border-transparent hover:border-red-900/30"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Reset All Progress (Local)
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
