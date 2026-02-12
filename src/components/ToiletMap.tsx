@@ -287,15 +287,19 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
   );
 };
 
-// Helper component for robust image loading
+// Helper component for robust image loading and mission card
 const ToiletImage = ({ src, alt, className }: { src?: string; alt: string; className?: string }) => {
   const [error, setError] = useState(false);
 
+  // If no image or error loading, show the "Mission Card"
   if (!src || error) {
     return (
-      <div className={`w-full h-full bg-slate-800 flex flex-col items-center justify-center p-4 text-center ${className}`}>
-        <Camera className="w-8 h-8 text-slate-600 mb-2" />
-        <span className="text-xs text-slate-500 font-light italic">Image unavailable</span>
+      <div className={`w-full h-full bg-slate-900/40 border-2 border-dashed border-slate-700/50 flex flex-col items-center justify-center p-6 text-center group/mission hover:border-amber-500/30 hover:bg-slate-800/60 transition-all cursor-pointer ${className}`}>
+        <div className="bg-slate-800 p-3 rounded-full mb-3 group-hover/mission:scale-110 transition-transform shadow-lg border border-slate-700">
+          <MapPin className="w-6 h-6 text-amber-500/60 group-hover/mission:text-amber-400" />
+        </div>
+        <span className="text-[10px] text-amber-500/90 font-bold tracking-widest uppercase mb-1">Mission: Archive</span>
+        <span className="text-[11px] text-slate-400 font-light leading-snug">Be the first to capture this location</span>
       </div>
     );
   }
@@ -303,9 +307,9 @@ const ToiletImage = ({ src, alt, className }: { src?: string; alt: string; class
   return (
     <img
       src={src}
+      onError={() => setError(true)}
       alt={alt}
       className={className}
-      onError={() => setError(true)}
     />
   );
 };

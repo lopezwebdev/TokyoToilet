@@ -2,6 +2,9 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Camera, X, Download, RotateCcw, MapPin } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { calculateDistance } from '../utils/geolocation';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, storage } from '../firebase';
 
 interface CameraCaptureProps {
   locationName: string;
@@ -27,6 +30,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isVerifyingLocation, setIsVerifyingLocation] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const checkLocation = useCallback(() => {
     setIsVerifyingLocation(true);
@@ -150,6 +155,42 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     stopCamera();
   }, [stopCamera, locationError]);
 
+  const submitToArchive = async () => {
+    if (!capturedPhoto) return;
+    setIsUploading(true);
+
+    try {
+      // Create a unique filename
+      const filename = `submissions/${locationName.replace(/\s+/g, '_')}_${Date.now()}.jpg`;
+      const storageRef = ref(storage, filename);
+
+      // Upload the base64 string
+      await uploadString(storageRef, capturedPhoto, 'data_url');
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Save metadata to Firestore
+      await addDoc(collection(db, 'submissions'), {
+        toiletId: locationName, // Ideally use ID, but name works for now
+        photoUrl: downloadURL,
+        timestamp: serverTimestamp(),
+        status: 'pending',
+        userAgent: navigator.userAgent
+      });
+
+      setUploadSuccess(true);
+      // Wait 2s then close
+      setTimeout(() => {
+        onPhotoTaken(capturedPhoto); // Also save locally as "completed"
+      }, 2000);
+
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("Failed to upload photo. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const savePhoto = useCallback(() => {
     if (!capturedPhoto) return;
 
@@ -255,6 +296,21 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 >
                   <Download className="w-4 h-4" />
                   {t('camera.savePhoto')}
+                </button>
+
+                <button
+                  onClick={submitToArchive}
+                  disabled={isUploading || uploadSuccess}
+                  className={`flex items-center gap-2 px-4 py-2 ${uploadSuccess ? 'bg-green-500 text-white' : 'bg-amber-500 text-slate-900'} font-bold rounded-lg hover:opacity-90 transition-all shadow-lg disabled:opacity-70`}
+                >
+                  {isUploading ? (
+                    <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                  ) : uploadSuccess ? (
+                    <MapPin className="w-4 h-4" />
+                  ) : (
+                    <MapPin className="w-4 h-4" />
+                  )}
+                  {isUploading ? 'Uploading...' : uploadSuccess ? 'Archived!' : 'Submit to Archive'}
                 </button>
               </div>
             </div>
