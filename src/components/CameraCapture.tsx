@@ -338,12 +338,14 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                       >
                         Retry GPS
                       </button>
-                      <button
-                        onClick={() => setLocationError(null)}
-                        className="w-full px-4 py-2 bg-amber-500/10 text-amber-500 border border-amber-500/50 rounded-lg text-sm hover:bg-amber-500/20 transition-colors font-medium"
-                      >
-                        Bypass (Test Mode)
-                      </button>
+                      {import.meta.env.DEV && (
+                        <button
+                          onClick={() => setLocationError(null)}
+                          className="w-full px-4 py-2 bg-amber-500/10 text-amber-500 border border-amber-500/50 rounded-lg text-sm hover:bg-amber-500/20 transition-colors font-medium"
+                        >
+                          Bypass (Test Mode)
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
