@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Camera, X, Download, RotateCcw, MapPin } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { calculateDistance } from '../utils/geolocation';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 
@@ -43,34 +43,41 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       return;
     }
 
+    // Timeout for location request (10s)
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const userLat = position.coords.latitude;
-        const userLng = position.coords.longitude;
-
+        setIsVerifyingLocation(false);
         const distance = calculateDistance(
-          userLat,
-          userLng,
+          position.coords.latitude,
+          position.coords.longitude,
           targetCoordinates.lat,
           targetCoordinates.lng
         );
 
-        // Allow if within 50 meters
-        if (distance <= 50) {
-          setLocationError(null);
+        if (distance > 0.05) { // 50 meters
+          setLocationError(t('camera.locationError')); // "Too far away"
         } else {
-          setLocationError(`You are too far from the location (${Math.round(distance)}m)`);
+          setLocationError(null);
         }
-        setIsVerifyingLocation(false);
       },
-      (err) => {
-        console.error("Geolocation error:", err);
-        setLocationError('Unable to retrieve location');
+      (error) => {
         setIsVerifyingLocation(false);
+        console.error("Geolocation error:", error);
+
+        let msg = t('camera.locationCheckFailed'); // "Unable to retrieve location"
+        if (error.code === 1) msg = "Location permission denied. Please allow location access.";
+        if (error.code === 3) msg = "Location request timed out. Please retry.";
+        setLocationError(msg);
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      options
     );
-  }, [targetCoordinates]);
+  }, [targetCoordinates, t]);
 
   const startCamera = useCallback(async () => {
     if (initializingRef.current) return;
@@ -160,19 +167,25 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     setIsUploading(true);
 
     try {
-      // Create a unique filename (sanitize)
+      // 1. Convert Base64 (DataURL) to Blob - More robust for uploads
+      const response = await fetch(capturedPhoto);
+      const blob = await response.blob();
+
+      // 2. Sanitize filename
       const sanitizedName = locationName.replace(/[^a-zA-Z0-9.-]/g, '_');
       const filename = `submissions/${sanitizedName}_${Date.now()}.jpg`;
       const storageRef = ref(storage, filename);
 
-      console.log('Starting upload to:', filename);
+      console.log('Starting Blob upload to:', filename, 'Size:', blob.size);
 
-      // Upload the base64 string
-      const uploadTask = uploadString(storageRef, capturedPhoto, 'data_url');
+      // 3. Upload Bytes with metadata
+      const uploadTask = uploadBytes(storageRef, blob, {
+        contentType: 'image/jpeg',
+      });
 
-      // Timeout promise
+      // Timeout promise (20s)
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 15000)
+        setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 20000)
       );
 
       await Promise.race([uploadTask, timeout]);
@@ -190,10 +203,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       });
 
       setUploadSuccess(true);
-
       // Wait 2s then close
       setTimeout(() => {
-        onPhotoTaken(capturedPhoto); // Also save locally as "completed"
+        onPhotoTaken(capturedPhoto);
       }, 2000);
 
     } catch (err: any) {
@@ -201,17 +213,14 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       let msg = "Failed to upload photo.";
 
       if (err.message === 'UPLOAD_TIMEOUT') {
-        msg = "Upload timed out. Check your internet connection.";
+        msg = "Upload timed out. Internet slow or Storage Bucket unreachable.";
       } else if (err.code === 'storage/unauthorized') {
-        msg = "Permission denied. Please check Firebase Storage rules (Test Mode).";
+        msg = "Permission denied. Check Firestore/Storage Rules.";
       } else if (err.code === 'storage/object-not-found' || err.code === 'storage/bucket-not-found') {
-        msg = "Configuration Error: Storage bucket not reachable.";
-      } else if (err.message && err.message.includes('network')) {
-        msg = "Network error. Please check your connection.";
+        msg = "Storage Bucket not found. Check firebase.ts config.";
       }
 
-      // Show full error for debugging
-      alert(msg + "\n\nDebug Info: " + (err.message || err.code));
+      alert(msg + "\n\nDebug: " + (err.message || err.code));
     } finally {
       setIsUploading(false);
     }
