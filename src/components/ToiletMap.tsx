@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Navigation, Info, Camera, CameraIcon, CheckCircle, List, Map as MapIcon, Trash2 } from 'lucide-react';
+import { MapPin, Navigation, Info, Camera, CameraIcon, CheckCircle, List, Map as MapIcon } from 'lucide-react';
 import { toiletLocations, ToiletLocation } from '../data/toiletLocations';
 import { CameraCapture } from './CameraCapture';
 import { ProgressCelebration } from './ProgressCelebration';
@@ -261,24 +261,6 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
             <p className="text-sm text-slate-400 font-light leading-relaxed">
               {t('map.about.description')}
             </p>
-
-            {import.meta.env.DEV && (
-              <div className="mt-6">
-                <button
-                  onClick={() => {
-                    if (window.confirm("Are you sure you want to reset all progress? This will delete your local photos and check-ins.")) {
-                      localStorage.removeItem('tokyo-toilet-photos');
-                      localStorage.removeItem('tokyo-toilet-completed');
-                      window.location.reload();
-                    }
-                  }}
-                  className="text-xs text-red-400/70 hover:text-red-400 flex items-center gap-2 transition-colors px-3 py-2 rounded-md hover:bg-red-900/20 border border-transparent hover:border-red-900/30"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  Reset All Progress (Local)
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -305,19 +287,15 @@ export const ToiletMap: React.FC<ToiletMapProps> = ({ selectedToilet, onToiletSe
   );
 };
 
-// Helper component for robust image loading and mission card
+// Helper component for robust image loading
 const ToiletImage = ({ src, alt, className }: { src?: string; alt: string; className?: string }) => {
   const [error, setError] = useState(false);
 
-  // If no image or error loading, show the "Mission Card"
   if (!src || error) {
     return (
-      <div className={`w-full h-full bg-slate-900/40 border-2 border-dashed border-slate-700/50 flex flex-col items-center justify-center p-6 text-center group/mission hover:border-amber-500/30 hover:bg-slate-800/60 transition-all cursor-pointer ${className}`}>
-        <div className="bg-slate-800 p-3 rounded-full mb-3 group-hover/mission:scale-110 transition-transform shadow-lg border border-slate-700">
-          <MapPin className="w-6 h-6 text-amber-500/60 group-hover/mission:text-amber-400" />
-        </div>
-        <span className="text-[10px] text-amber-500/90 font-bold tracking-widest uppercase mb-1">Mission: Archive</span>
-        <span className="text-[11px] text-slate-400 font-light leading-snug">Be the first to capture this location</span>
+      <div className={`w-full h-full bg-slate-800 flex flex-col items-center justify-center p-4 text-center ${className}`}>
+        <Camera className="w-8 h-8 text-slate-600 mb-2" />
+        <span className="text-xs text-slate-500 font-light italic">Image unavailable</span>
       </div>
     );
   }
@@ -325,9 +303,9 @@ const ToiletImage = ({ src, alt, className }: { src?: string; alt: string; class
   return (
     <img
       src={src}
-      onError={() => setError(true)}
       alt={alt}
       className={className}
+      onError={() => setError(true)}
     />
   );
 };
