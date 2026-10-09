@@ -19,6 +19,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const initializingRef = useRef(false);
+  const streamRef = useRef<MediaStream | null>(null);
+  const mountedRef = useRef(false);
+  const cameraRequestRef = useRef(0);
+  const locationRequestRef = useRef(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +31,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isVerifyingLocation, setIsVerifyingLocation] = useState(false);
 
+  const [hasStarted, setHasStarted] = useState(false);
+
   const checkLocation = useCallback(() => {
+    const requestId = ++locationRequestRef.current;
     setIsVerifyingLocation(true);
     setLocationError(null);
 
@@ -36,69 +44,133 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       return;
     }
 
+    // Timeout for location request (10s)
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const userLat = position.coords.latitude;
-        const userLng = position.coords.longitude;
-
+        if (!mountedRef.current || requestId !== locationRequestRef.current) return;
+        setIsVerifyingLocation(false);
         const distance = calculateDistance(
-          userLat,
-          userLng,
+          position.coords.latitude,
+          position.coords.longitude,
           targetCoordinates.lat,
           targetCoordinates.lng
         );
 
-        // Allow if within 50 meters
-        if (distance <= 50) {
-          setLocationError(null);
+        if (distance > 50) { // 50 meters
+          setLocationError("You are too far from the location to take this picture.");
         } else {
-          setLocationError(`You are too far from the location (${Math.round(distance)}m)`);
+          setLocationError(null);
         }
-        setIsVerifyingLocation(false);
       },
-      (err) => {
-        console.error("Geolocation error:", err);
-        setLocationError('Unable to retrieve location');
+      (error) => {
+        if (!mountedRef.current || requestId !== locationRequestRef.current) return;
         setIsVerifyingLocation(false);
+        console.error("Geolocation error:", error);
+
+        let msg = 'Unable to retrieve location. Please retry.';
+        if (error.code === 1) msg = "Location permission denied. Please allow location access.";
+        if (error.code === 3) msg = "Location request timed out. Please retry.";
+        setLocationError(msg);
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      options
     );
   }, [targetCoordinates]);
 
+  const stopCamera = useCallback(() => {
+    ++cameraRequestRef.current;
+    initializingRef.current = false;
+    streamRef.current?.getTracks().forEach(track => track.stop());
+    streamRef.current = null;
+    if (mountedRef.current) setStream(null);
+  }, []);
+
+  const cancelLocationCheck = useCallback(() => {
+    ++locationRequestRef.current;
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      cancelLocationCheck();
+      stopCamera();
+    };
+  }, [stopCamera, cancelLocationCheck]);
+
   const startCamera = useCallback(async () => {
+    if (initializingRef.current || !mountedRef.current) return;
+    stopCamera();
+    initializingRef.current = true;
+    const requestId = cameraRequestRef.current;
+    const isCurrent = () => mountedRef.current && requestId === cameraRequestRef.current;
+    let expired = false;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     setIsLoading(true);
     setError(null);
     checkLocation();
 
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          aspectRatio: { ideal: 9 / 16 }
-        }
-      });
-
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera access is unavailable. Use HTTPS and a supported browser.');
       }
-    } catch (err) {
-      setError(t('camera.error'));
-      console.error('Camera access error:', err);
+      const camera = navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', aspectRatio: { ideal: 9 / 16 } } })
+        .then(mediaStream => {
+          // Permission prompts cannot be cancelled; dispose of any late stream.
+          if (expired || !isCurrent()) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            return null;
+          }
+          return mediaStream;
+        });
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          expired = true;
+          reject(new Error('TIMEOUT'));
+        }, 10000);
+      });
+      const mediaStream = await Promise.race([camera, timeout]);
+      if (!mediaStream) return;
+      if (!isCurrent()) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      streamRef.current = mediaStream;
+      setStream(mediaStream);
+    } catch (err: unknown) {
+      if (!isCurrent()) return;
+      const cameraError = err instanceof Error ? err : new Error(String(err));
+      console.error('Camera access error:', cameraError);
+      let errorMessage = t('camera.error');
+      if (cameraError.message === 'TIMEOUT') {
+        errorMessage = 'Camera is taking too long to start. Please check permissions.';
+      } else if (cameraError.name === 'NotAllowedError' || cameraError.name === 'PermissionDeniedError') {
+        errorMessage = 'Camera permission denied. Please reset permissions in Settings.';
+      } else if (cameraError.name === 'NotFoundError' || cameraError.name === 'DevicesNotFoundError') {
+        errorMessage = 'No camera found on this device.';
+      } else if (cameraError.name === 'NotReadableError' || cameraError.name === 'TrackStartError') {
+        errorMessage = 'Camera is in use by another app.';
+      } else if (!navigator.mediaDevices?.getUserMedia) {
+        errorMessage = cameraError.message;
+      }
+      setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      clearTimeout(timeoutId);
+      if (isCurrent()) {
+        setIsLoading(false);
+        initializingRef.current = false;
+      }
     }
-  }, [checkLocation, t]);
-
-  const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  }, [stream]);
+  }, [checkLocation, stopCamera, t]);
 
   const capturePhoto = useCallback(() => {
-    if (locationError) return;
+    if (locationError || isVerifyingLocation || isLoading || !streamRef.current) return;
 
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -106,7 +178,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
-    if (!context) return;
+    if (!context || !video.videoWidth || !video.videoHeight) return;
 
     // Set canvas dimensions to match video
     canvas.width = video.videoWidth;
@@ -119,7 +191,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     const photoUrl = canvas.toDataURL('image/jpeg', 0.9);
     setCapturedPhoto(photoUrl);
     stopCamera();
-  }, [stopCamera, locationError]);
+  }, [stopCamera, locationError, isVerifyingLocation, isLoading]);
 
   const savePhoto = useCallback(() => {
     if (!capturedPhoto) return;
@@ -138,10 +210,16 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     startCamera();
   }, [startCamera]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream, isLoading, isVerifyingLocation, capturedPhoto, error]);
+
+  const handleStartCamera = () => {
+    setHasStarted(true);
     startCamera();
-    return () => stopCamera();
-  }, [startCamera, stopCamera]);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
@@ -164,7 +242,21 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
         {/* Camera/Photo Area */}
         <div className="relative bg-black">
-          {error ? (
+          {!hasStarted ? (
+            <div className="p-12 text-center min-h-[300px] flex flex-col items-center justify-center">
+              <Camera className="w-16 h-16 text-slate-600 mb-6" />
+              <p className="text-slate-300 mb-6 font-light">
+                Ready to capture at {locationName}?
+              </p>
+              <button
+                onClick={handleStartCamera}
+                className="px-6 py-3 bg-amber-500 text-slate-900 font-bold rounded-full hover:bg-amber-400 transition-transform active:scale-95 shadow-lg flex items-center gap-2"
+              >
+                <Camera className="w-5 h-5" />
+                Start Camera
+              </button>
+            </div>
+          ) : error ? (
             <div className="p-8 text-center">
               <p className="text-red-400 mb-4">{error}</p>
               <button
@@ -174,9 +266,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 {t('camera.tryAgain')}
               </button>
             </div>
-          ) : isLoading ? (
+          ) : isLoading || isVerifyingLocation ? (
             <div className="p-8 text-center">
-              <p className="text-slate-400">{t('camera.starting')}</p>
+              <p className="text-slate-400">{isLoading ? t('camera.starting') : 'Verifying location...'}</p>
             </div>
           ) : capturedPhoto ? (
             <div className="relative">
@@ -226,12 +318,14 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                       >
                         Retry GPS
                       </button>
+                      {import.meta.env.DEV && (
                       <button
                         onClick={() => setLocationError(null)}
                         className="w-full px-4 py-2 bg-amber-500/10 text-amber-500 border border-amber-500/50 rounded-lg text-sm hover:bg-amber-500/20 transition-colors font-medium"
                       >
                         Bypass (Test Mode)
                       </button>
+                      )}
                     </div>
                   </div>
                 </div>
