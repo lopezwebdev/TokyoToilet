@@ -7,7 +7,7 @@ An interactive web application and progressive web app (PWA) exploring "THE TOKY
 -   **Interactive Map**: Powered by Leaflet, showing all 17 iconic toilet locations.
 -   **GPS Check-in**: Verifies user location (within 50m) to unlock camera functionality.
 -   **Camera Integration**: Custom camera interface with portrait optimization and "Test Mode" for development.
--   **Progress Tracking**: Stores compressed JPEG photos and visit completion together in IndexedDB; migrates earlier localStorage records safely.
+-   **Progress Tracking**: Persists visited locations and captured photos locally.
 -   **Multi-language Support**: English and Japanese (auto-detected or toggled).
 -   **Responsive Design**: Mobile-first UI tailored for smartphones.
 
@@ -63,19 +63,3 @@ This project can be wrapped as a native iOS app using Capacitor.
 -   Leaflet (Maps)
 -   Capacitor (Native runtime)
 -   Lucide React (Icons)
-
-## Community archive and moderation
-
-Visitors can save photos privately or submit them for moderator review. Only approved submissions appear in the public archive. Moderator accounts use Firebase Auth custom claims; Firestore and Storage rules are included in this repository. The archive is disabled until Firebase is configured. See [Firebase setup and deployment](docs/firebase-setup.md).
-
-```bash
-npm test
-npm run typecheck
-npm run lint
-npm run test:rules # Requires Firebase CLI and Java 21+
-```
-
-## iOS permissions
-
-The native Info.plist includes camera and location-in-use purpose descriptions. After editing the web app, run `npm run build` and `npx cap sync ios`, then rebuild in Xcode. Camera and location behavior must be tested on a real iPhone; simulator camera availability varies. Saving progress uses the app's IndexedDB store and does not write directly to the Photos library.
-# seven_years_under_your_spell
